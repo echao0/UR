@@ -37,15 +37,15 @@ python_args = parser.parse_args()
 
 
 # ------- Configuration Python Server ---------- #
-server_host = ''
-server_port = int(8000)  # Server socket to comunicate 
+server_host = '192.168.3.181'
+server_port = int(8000)  # Server socket to comunicate
 server_on = True  # Variable de control de flujo
-working = False  # variable para control pila de salida ardu_out
+
 
 # ------- Time configuration -------#
 
 sleep_time = 0.7  # Time to wait in infinite loop (CPU control)
-time_alive = 35  # Time to check if devices are online
+
 
 class miserver():
     global server_on
@@ -65,14 +65,15 @@ class miserver():
     def server_start(self):  # Funcion de inicio y control de puerto de escucha
         try:
             server = SocketServer.TCPServer((server_host, server_port), ServerHandler)  # Creo el objeto servidor
-            server.socket.settimeout(
-                3.0)  # Selecciono un timeout del servidor de 5 segundos (evito fallo de cierre de server)
+            #server.socket.settimeout(13.0)  # Selecciono un timeout del servidor de 5 segundos (evito fallo de cierre de server)
 
             while server_on:  # Control de variable de cierre de hilo principal
+
                 server.handle_request()
+
             else:
-                server.socket.shutdown()
                 server.socket.close()
+                server.socket.shutdown()
 
 
         except:
@@ -87,3 +88,58 @@ class miserver():
         server_thread.daemon = True
         server_thread.start()
 
+
+class ServerHandler(SocketServer.BaseRequestHandler):
+    def handle(self):
+
+        while True:
+            try:
+                #print "{} envia:".format(self.client_address[0])
+
+                self.jump = False
+                self.data = self.request.recv(1024).strip()
+
+                datos = self.data.split(",")  # separo la cadena y formo una lista datos[1] = persiana datos[0] = accion
+
+                if python_args.verbose:
+                    print "Datos 0: " + datos[0]
+                    print "Datos 1: " + datos[1]
+
+                if datos[0] == "ack":
+                    resp = "ack"
+                    print "He recibido: " + datos[0] + " desde " + datos[1]
+                    self.request.send(str(resp))
+            except:
+                continue
+
+
+# -----------------------Declaracion de "UrServer"-------------------------
+
+os.system('clear')
+if python_args.verbose:
+    titulo = "-"
+    print titulo.center(50, "-")
+    titulo = '\033[1;34m Servidor Control UR \033[1;m'
+    print titulo.center(50, " ")
+    titulo = "-"
+    print titulo.center(50, "-")
+
+servidor1 = miserver()
+servidor1.start()  # Server start to recive packets
+
+# -----------------------------------------------------------------------
+
+# -----------------------Bucle de programa ------------------------------
+
+
+try:
+    while (1):
+        time.sleep(0.7)
+
+except KeyboardInterrupt:
+    if python_args.verbose:
+        print "Detectado el cierre del hilo principal"
+        print "Matando hilos secundarios"
+
+    server_on = False
+    os.system('sudo killall UrServer')
