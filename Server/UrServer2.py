@@ -10,32 +10,45 @@ libc = ctypes.cdll.LoadLibrary('libc.so.6')
 libc.prctl(15, 'UrServer', 0, 0, 0)
 # -----------------------------------------------------------------------
 
+import argparse  # biblioteca para argumentos
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-v", "--verbose", action="store_true")
+python_args = parser.parse_args()
+
+
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-""" 
-if len(sys.argv) != 3:
-    print "Correct usage: script, IP address, port number"
-    exit()
-"""
+
+if python_args.verbose:
+    print "Servidor creado he iniciado"
+
 
 IP_address = '192.168.3.181'
 Port = 8000
 server.bind((IP_address, Port)) 
-#binds the server to an entered IP address and at the specified port number. The client must be aware of these parameters
-server.listen(100)
-#listens for 100 active connections. This number can be increased as per convenience
+
+server.listen(100)    #listens for 100 active connections. This number can be increased as per convenience
 list_of_clients=[]
 
 def clientthread(conn, addr):
     conn.send("Welcome to this chatroom!")
-    #sends a message to the client whose user object is conn
     while True:
+
             try:     
-                message = conn.recv(2048)    
+                message = conn.recv(2048)
                 if message:
                     print "<" + addr[0] + "> " + message
                     message_to_send = "<" + addr[0] + "> " + message
-                    broadcast(message_to_send,conn)
+
+                    if (message != "\r"):
+                        broadcast(message_to_send,conn)
+                        conn.send("ack\r")
+                        x = 0
+                        for clients in list_of_clients:
+                            x = x + 1
+                        print "numero total de clientes conectados: " + str(x)
+
                     #prints the message and address of the user who just sent the message on the server terminal
                 else:
                     remove(conn)
@@ -67,6 +80,7 @@ while True:
     #Prints the address of the person who just connected
     start_new_thread(clientthread,(conn,addr))
     #creates and individual thread for every user that connects
+
 
 conn.close()
 server.close()

@@ -61,14 +61,17 @@ void loop() {
     return;
   }
 
-  // This will send the request to the server
-  client.println("ack,NodeMCU");
-
-  //read back one line from server
-  Serial.println("receiving from remote server");
-  String line = client.readStringUntil('\r');
-  Serial.println(line);
-
+   while (client.connected()) {
+    // This will send the request to the server
+    client.println("ack");
+  
+    //read back one line from server
+    Serial.println("receiving from remote server");
+    String line = client.readStringUntil('\r');
+    Serial.println(line);
+    delay(2000);
+   }
+   
   Serial.println("closing connection");
   client.stop();
 
