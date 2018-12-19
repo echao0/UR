@@ -93,23 +93,23 @@ void loop() {
     if (client.connected()) {
        client.println(user_passw);
         delay(500);
-        client.println("name,urControl");
+        client.println("name,UrNode");
       }
  //----------------------------------------
  
     while (client.connected()) {
          
-        if (digitalRead(0) == 0){
+     /*   if (digitalRead(0) == 0){
           client.println("TestNodeMcu");
           Serial.println("Test send");
           }
-         
+       */  
         Serial.println("receiving from remote server");
         String line = client.readStringUntil('\r');
         Serial.println(line);
             
-          if (line == "t"){
-                client.println("ack");
+          if (line == "alive"){
+                client.println("alive,UrNode");
             }
             
            if (line == "DeviceOn"){
