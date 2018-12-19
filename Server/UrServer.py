@@ -27,8 +27,6 @@ def packetHandling(data,key):
 
         if data.count(",") == 1:
             data = data.split(",")
-            print(data[0])
-            print(data[1])
             if data[0] == "name":
                 key.name = data[1]
 
@@ -38,28 +36,39 @@ def packetHandling(data,key):
         if data == "TestNodeMcu":
             return b'ack_server'
 
+def secure(conn):
+    data = "vacio"
+    data = conn.recv(1024)  # Should be ready to read
+    if data:
+        data = data.decode('UTF-8')  # convert to string (Python 3 only)
+        data = data.replace("\n", "")  # remove newline character
+        data = data.replace("\r", "")  # remove newline character
+        try:
+            data = int(data)
+        except:
+            data = 0
+
+        print(data)
+
+        if (data == NodePassword):
+            return 1
+        else:
+            return data
 
 
 def accept_wrapper(sock):
     conn, addr = sock.accept()  # Should be ready to read
-    recv_data = conn.recv(1024)  # Should be ready to read
-    if recv_data:
-        data = recv_data
-        data = data.decode('UTF-8')  # convert to string (Python 3 only)
-        data = data.replace("\n", "")  # remove newline character
-        data = data.replace("\r", "")  # remove newline character
-        data = int(data)
-        print(data)
 
-        if (data == NodePassword):
-            print("accepted connection from", addr)
-            conn.setblocking(False)
-            data = types.SimpleNamespace(addr=addr, inb=b"", outb=b"", name=b"test_name1")
-            events = selectors.EVENT_READ | selectors.EVENT_WRITE
-            sel.register(conn, events, data=data)
-        else:
-            print("Password incorrecto", addr)
-            conn.close()
+    password = secure(conn)
+    if (password == 1):
+        print("accepted connection from", addr)
+        conn.setblocking(False)
+        data = types.SimpleNamespace(addr=addr, inb=b"", outb=b"", name=b"test_name1")
+        events = selectors.EVENT_READ | selectors.EVENT_WRITE
+        sel.register(conn, events, data=data)
+    else:
+        print("Password incorrecto: ", password, "dede la IP: ", addr)
+        conn.close()
 
 
 def service_connection(key, mask):
@@ -98,7 +107,7 @@ try:
     while True:
         events = sel.select(timeout=None)
         for key, mask in events:
-            #print (key.data)
+            print (key.data)
             if key.data is None:
                 accept_wrapper(key.fileobj)
             else:
