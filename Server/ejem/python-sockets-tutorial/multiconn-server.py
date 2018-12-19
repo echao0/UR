@@ -55,7 +55,6 @@ lsock.bind((host, port))
 lsock.listen()
 print("listening on", (host, port))
 lsock.setblocking(False)
-
 sel.register(lsock, selectors.EVENT_READ, data=None)
 
 try:
@@ -63,12 +62,12 @@ try:
         events = sel.select(timeout=None)
         for key, mask in events:
             print (key.data)
+            
             if key.data is None:
                 accept_wrapper(key.fileobj)
             else:
                 service_connection(key, mask)
         time.sleep(sleep_time)
-
 except KeyboardInterrupt:
     print("caught keyboard interrupt, exiting")
 finally:

@@ -12,6 +12,8 @@
 #define STAPSK  "locastela"
 #endif
 
+int user_passw = 8613;
+
 const char* ssid     = STASSID;
 const char* password = STAPSK;
 
@@ -44,37 +46,50 @@ void setup() {
   delay(500);
 }
 
-
 void loop() {
-  Serial.print("connecting to ");
-  Serial.print(host);
-  Serial.print(':');
-  Serial.println(port);
-
-  // Use WiFiClient class to create TCP connections
-  WiFiClient client;
-
-  if (!client.connect(host, port)) {
-    Serial.println("connection failed");
-    Serial.println("wait 5 sec...");
-    delay(5000);
-    return;
-  }
-
-   while (client.connected()) {
-    // This will send the request to the server
-    client.println("ack");
+    Serial.print("connecting to ");
+    Serial.print(host);
+    Serial.print(':');
+    Serial.println(port);
   
-    //read back one line from server
-    Serial.println("receiving from remote server");
-    String line = client.readStringUntil('\r');
-    Serial.println(line);
-    delay(2000);
+    WiFiClient client;
+  
+    if (!client.connect(host, port)) {
+        Serial.println("connection failed");
+        Serial.println("wait 5 sec...");
+        delay(5000);
+        return;
+    }
+//-----------------PASSWORD APP-------------
+    if (client.connected()) {
+        client.println(user_passw);
+      }
+ //----------------------------------------
+ 
+    while (client.connected()) {
+        Serial.println("receiving from remote server");
+        String line = client.readStringUntil('\r');
+    
+          if (line == "t"){
+                client.println("ack");
+            }
+            
+           if (line == "DeviceOn"){
+                Serial.println ("Enciendo todo");
+                client.println("Enciendo todo");
+            }
+            
+           if (line == "DeviceOff"){
+                Serial.println ("Apago todo");
+                client.println("Apago todo");
+              }
+          
+        delay(100);
    }
    
   Serial.println("closing connection");
   client.stop();
 
-  Serial.println("wait 5 sec...");
+  Serial.println("wait 5 sec... to reconnect");
   delay(5000);
 }
