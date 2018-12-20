@@ -21,6 +21,21 @@ tempoTime = 5
 
 sel = selectors.DefaultSelector()
 
+def packetSender(name,data):
+
+    try:
+        for key, mask in events:
+            dato = key.data.name
+            dato = dato.replace("\n", "")  # remove newline character
+            dato = dato.replace("\r", "")  # remove newline character
+
+            if dato == name:
+                data = data + '\r'
+                key.data.outb = bytes(data, 'utf-8')
+    except:
+        print ("no se ha encontrado el device")
+        pass
+
 def tempo():          #Funcion que se repite durante un tiempo determinado
     while working == True:
         time.sleep(tempoTime)
@@ -41,9 +56,17 @@ def packetHandling(data,key):
             data = data.split(",")
             if data[0] == "name":
                 key.name = data[1]
+                return b'name,ok'
 
             if data[0] == "alive":
                 key.name = data[1]
+
+            if data[0] == "UrNode":
+                packetSender(data[0], data[1])
+
+            if data[0] == "Macbook":
+                packetSender(data[0], data[1])
+
 
         else:
             print(data)
@@ -52,8 +75,9 @@ def packetHandling(data,key):
             return b'ack_server'
 
 def secure(conn):
-    data = "vacio"
+
     data = conn.recv(1024)  # Should be ready to read
+
     if data:
         data = data.decode('UTF-8')  # convert to string (Python 3 only)
         data = data.replace("\n", "")  # remove newline character
@@ -118,8 +142,8 @@ lsock.setblocking(False)
 
 sel.register(lsock, selectors.EVENT_READ, data=None)
 
-htempo = threading.Thread(target=tempo)
-htempo.start()
+#htempo = threading.Thread(target=tempo)
+#htempo.start()
 
 try:
     while True:
