@@ -19,6 +19,8 @@ NodePassword = 8613
 sleep_time = 0.7  # Time to wait in infinite loop (CPU control)
 tempoTime = 5
 
+host = "192.168.3.181"
+port = 8000
 sel = selectors.DefaultSelector()
 
 def packetSender(name,data):
@@ -128,12 +130,14 @@ def service_connection(key, mask):
             sent = sock.send(data.outb)  # Should be ready to write
             data.outb = data.outb[sent:]
 
-
+"""
 if len(sys.argv) != 3:
     print("usage:", sys.argv[0], "<host> <port>")
     sys.exit(1)
 
 host, port = sys.argv[1], int(sys.argv[2])
+"""
+
 lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 lsock.bind((host, port))
 lsock.listen()
