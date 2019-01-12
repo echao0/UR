@@ -9,12 +9,13 @@
 
 
 #ifndef STASSID
-#define STASSID "Teresawifi"
-#define STAPSK  "locastela"
+#define STASSID "Me-House"
+#define STAPSK  "Et-micasa"
 #endif
 
-int user_passw = 8613;
-
+int user_passw =8613;
+String deviceName = "UrNode2";
+ 
 const char* ssid     = STASSID;
 const char* password = STAPSK;
 
@@ -27,7 +28,7 @@ ESP8266WiFiMulti WiFiMulti;
   int tempPin= A0;
   char out1 = D1;
   char out2 = D2;
-  char out3 = D3;
+  char out3 = D8;
   char out4 = D4;
   char out5 = D5;
   
@@ -92,8 +93,8 @@ void loop() {
 //-----------------Send NAME-------------
     if (client.connected()) {
        client.println(user_passw);
-        delay(500);
-        client.println("name,UrNode");
+        delay(1500);
+        client.println("name," + deviceName);
       }
  //----------------------------------------
  
@@ -109,20 +110,79 @@ void loop() {
         Serial.println(line);
             
           if (line == "alive"){
-                client.println("alive,UrNode");
+                client.println("NodeUr2,alive");
             }
             
            if (line == "DeviceOn"){
                 Serial.println ("Enciendo todo");
-                client.println("Enciendo todo");
+                client.println("NodeUr2,allOn");
                 digitalWrite(out1, alto);
+                digitalWrite(out2, alto);
+                digitalWrite(out3, alto);
+                digitalWrite(out4, alto);
             }
             
            if (line == "DeviceOff"){
                 Serial.println ("Apago todo");
-                client.println("Apago todo");
+                client.println("NodeUr2,allOff");
+                digitalWrite(out1, bajo);
+                digitalWrite(out2, bajo);
+                digitalWrite(out3, bajo);
+                digitalWrite(out4, bajo);
+              }
+           if (line == "Device1On"){
+                Serial.println ("Enciendo 1");
+                client.println("NodeUr2,d1On");
+                digitalWrite(out1, alto);
+              }
+           if (line == "Device2On"){
+                Serial.println ("Enciendo 2");
+                client.println("NodeUr2,d2On");
+                digitalWrite(out2, alto);
+              }
+           if (line == "Device3On"){
+                Serial.println ("Enciendo 3");
+                client.println("NodeUr2,d3On");
+                digitalWrite(out3, alto);
+              }
+           if (line == "Device4On"){
+                Serial.println ("Enciendo 4");
+                client.println("NodeUr2,d4On");
+                digitalWrite(out4, alto);
+              }
+           if (line == "Device1Off"){
+                Serial.println ("Apago 1");
+                client.println("NodeUr2,d1Off");
                 digitalWrite(out1, bajo);
               }
+           if (line == "Device2Off"){
+                Serial.println ("Apago 2");
+                client.println("NodeUr2,d2Off");
+                digitalWrite(out2, bajo);
+              }
+           if (line == "Device3Off"){
+                Serial.println ("Apago 3");
+                client.println("NodeUr2,d3Off");
+                digitalWrite(out3, bajo);
+              }
+            if (line == "Device4Off"){
+                Serial.println ("Apago 4");
+                client.println("NodeUr2,d4Off");
+                digitalWrite(out4, bajo);
+              }
+            if (line == "nodeStatus"){
+                Serial.println("dentro de Status");
+                String  outStatus =  String(!digitalRead(out1));
+                outStatus += "/";
+                outStatus += String(!digitalRead(out2));
+                outStatus += "/";
+                outStatus += String(!digitalRead(out3));
+                outStatus += "/";
+                outStatus += String(!digitalRead(out4));
+                Serial.println("NodeUr2," + outStatus);
+                client.println("NodeUr2," + outStatus);
+              }
+             
           
         delay(100);
    }

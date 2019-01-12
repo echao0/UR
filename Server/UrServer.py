@@ -35,10 +35,11 @@ def packetSender(name,data):
                 data = data + '\r'
                 key.data.outb = bytes(data, 'utf-8')
     except:
-        print ("no se ha encontrado el device")
+        #print ("no se ha encontrado el device")
         pass
 
 def tempo():          #Funcion que se repite durante un tiempo determinado
+    #http://www.aprendeaprogramar.com/mod/forum/discuss.php?d=1935
     while working == True:
         time.sleep(tempoTime)
         print("temporizador acabado")
@@ -50,6 +51,8 @@ def tempo():          #Funcion que se repite durante un tiempo determinado
 
 def packetHandling(data,key):
 
+        #UrNode2,DeviceOn
+
         data = data.decode('UTF-8')  # convert to string (Python 3 only)
         data = data.replace("\n", "")  # remove newline character
         data = data.replace("\r", "")  # remove newline character
@@ -58,53 +61,70 @@ def packetHandling(data,key):
             data = data.split(",")
             if data[0] == "name":
                 key.name = data[1]
-                return b'name,ok'
+                return b'name,ok\r\n'
 
             if data[0] == "alive":
-                key.name = data[1]
+                key.alive = data[1]
+                return b'ack_server\r\n'
 
-            if data[0] == "UrNode":
+            if data[0] == "UrNode2":
                 packetSender(data[0], data[1])
+                return b'ack_server\r\n'
 
             if data[0] == "Macbook":
                 packetSender(data[0], data[1])
+                return b'ack_server\r\n'
 
+    #---------Recepcion del nodemcu
+
+            if data[0] == "NodeUr2":
+               # print ("UrNode said:", data[1])
+                packetSender("Macbook", data[1])
 
         else:
-            print(data)
+            print("recibido general:",data)
+
 
         if data == "TestNodeMcu":
             return b'ack_server'
 
 def secure(conn):
 
-    data = conn.recv(1024)  # Should be ready to read
+    time.sleep(0.1)
 
-    if data:
-        data = data.decode('UTF-8')  # convert to string (Python 3 only)
-        data = data.replace("\n", "")  # remove newline character
-        data = data.replace("\r", "")  # remove newline character
-        try:
-            data = int(data)
-        except:
-            data = 0
-
+    try:
+        data = conn.recv(1024)  # Should be ready to read
         print(data)
+        if data:
+            try:
+                data = data.decode('UTF-8')  # convert to string (Python 3 only)
+                data = data.replace("\n", "")  # remove newline character
+                data = data.replace("\r", "")  # remove newline character
+                data = int(data)
+            except:
+                data = 0
 
-        if (data == NodePassword):
-            return 1
-        else:
-            return data
+            if (data == NodePassword):
+                print("password aceptado:", data)
+                return 1
+            else:
+                return data
+    except:
+        return 0
 
+def secure_Timer():
+    time.sleep(5)
+    return 1
 
 def accept_wrapper(sock):
     conn, addr = sock.accept()  # Should be ready to read
+    conn.setblocking(False)
 
     password = secure(conn)
+
     if (password == 1):
         print("accepted connection from", addr)
-        conn.setblocking(False)
-        data = types.SimpleNamespace(addr=addr, inb=b"", outb=b"", name=b"")
+        data = types.SimpleNamespace(addr=addr, inb=b"", outb=b"", name=b"", alive=b"1")
         events = selectors.EVENT_READ | selectors.EVENT_WRITE
         sel.register(conn, events, data=data)
     else:
@@ -115,20 +135,30 @@ def accept_wrapper(sock):
 def service_connection(key, mask):
     sock = key.fileobj
     data = key.data
-    if mask & selectors.EVENT_READ:
-        recv_data = sock.recv(1024)  # Should be ready to read
-        if recv_data:
-            #data.outb += recv_data
-            data.outb = packetHandling(recv_data,data)
-        else:
-            print("closing connection to", data.addr)
-            sel.unregister(sock)
-            sock.close()
-    if mask & selectors.EVENT_WRITE:
-        if data.outb:
-            print("enviando:", repr(data.outb), "to", data.addr, "alias", data.name)
-            sent = sock.send(data.outb)  # Should be ready to write
-            data.outb = data.outb[sent:]
+    try:
+        if mask & selectors.EVENT_READ:
+            recv_data = sock.recv(1024)  # Should be ready to read
+            if recv_data:
+                #data.outb += recv_data
+                data.outb = packetHandling(recv_data,data)
+            else:
+                print("closing connection to", data.addr, "alias ",data.name)
+                sel.unregister(sock)
+                sock.close()
+    except:
+        print("Port died to", data.addr, "alias ", data.name)
+        sel.unregister(sock)
+        sock.close()
+    try:
+        if mask & selectors.EVENT_WRITE:
+            if data.outb:
+               # print("enviando:", repr(data.outb), "to", data.addr, "alias", data.name)
+                sent = sock.send(data.outb)  # Should be ready to write
+                data.outb = data.outb[sent:]
+    except:
+        print("2 closing connection to", data.addr, "alias ", data.name)
+        sel.unregister(sock)
+        sock.close()
 
 """
 if len(sys.argv) != 3:
@@ -137,14 +167,28 @@ if len(sys.argv) != 3:
 
 host, port = sys.argv[1], int(sys.argv[2])
 """
+def createPort():
+    try:
+        lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        lsock.bind((host, port))
+        lsock.listen()
+        print("listening on", (host, port))
+        lsock.setblocking(False)
+        sel.register(lsock, selectors.EVENT_READ, data=None)
+        return 1
 
-lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-lsock.bind((host, port))
-lsock.listen()
-print("listening on", (host, port))
-lsock.setblocking(False)
+    except:
+        return 0
 
-sel.register(lsock, selectors.EVENT_READ, data=None)
+#Bucle de inicio de servidor con tiempo de esper 10 seg
+while(True):
+
+    if (createPort() == 1):
+        break
+    else:
+        print( "No es posible crear el servidor, esperando 10 segundos")
+        time.sleep(10)
+
 
 #htempo = threading.Thread(target=tempo)
 #htempo.start()
