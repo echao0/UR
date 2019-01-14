@@ -18,6 +18,7 @@ working = True #variable para matar al temporizador
 NodePassword = 8613
 sleep_time = 0.7  # Time to wait in infinite loop (CPU control)
 tempoTime = 5
+serveName = "Macbook"
 
 host = "192.168.3.181"
 port = 8000
@@ -28,8 +29,11 @@ def packetSender(name,data):
     try:
         for key, mask in events:
             dato = key.data.name
-            dato = dato.replace("\n", "")  # remove newline character
-            dato = dato.replace("\r", "")  # remove newline character
+            try:
+                dato = dato.replace("\n", "")  # remove newline character
+                dato = dato.replace("\r", "")  # remove newline character
+            except:
+                pass
 
             if dato == name:
                 data = data + '\r'
@@ -57,32 +61,33 @@ def packetHandling(data,key):
         data = data.replace("\n", "")  # remove newline character
         data = data.replace("\r", "")  # remove newline character
 
-        if data.count(",") == 1:
-            data = data.split(",")
-            if data[0] == "name":
-                key.name = data[1]
-                return b'name,ok\r\n'
+        #if data.count(",") == 1:
+        data = data.split(",")
 
-            if data[0] == "alive":
-                key.alive = data[1]
-                return b'ack_server\r\n'
+        if data[0] == "name":
+            key.name = data[1]
+            return b'name,ok\r\n'
 
-            if data[0] == "UrNode2":
-                packetSender(data[0], data[1])
-                return b'ack_server\r\n'
+        elif data[0] == "alive":
+            key.alive = data[1]
+            print (time.strftime("%H:%M:%S"))
+            return b'ack\r\n'
 
-            if data[0] == "Macbook":
-                packetSender(data[0], data[1])
-                return b'ack_server\r\n'
 
-    #---------Recepcion del nodemcu
 
-            if data[0] == "NodeUr2":
-               # print ("UrNode said:", data[1])
-                packetSender("Macbook", data[1])
+        elif data[0] == "urSend":
+
+            if (data[1] == "server"): #Cambio el nombre generico por el especificado en serveName
+                data[1] = serveName
+
+            packetSender(data[1], data[2])
+            return b'ack_server\r\n'
+
 
         else:
             print("recibido general:",data)
+            for datos in data:
+                print(datos)
 
 
         if data == "TestNodeMcu":

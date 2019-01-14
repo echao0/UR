@@ -22,6 +22,8 @@ const char* password = STAPSK;
 const char* host = "echao.asuscomm.com";
 const uint16_t port = 8000;
 
+int online = 0;
+
 ESP8266WiFiMulti WiFiMulti;
 
 //----------DEF I/O-------
@@ -105,17 +107,17 @@ void loop() {
           Serial.println("Test send");
           }
        */  
-        Serial.println("receiving from remote server");
         String line = client.readStringUntil('\r');
+        if (line != ""){
         Serial.println(line);
-            
+        }
           if (line == "alive"){
-                client.println("NodeUr2,alive");
+                client.println("urSend,server,alive");
             }
             
            if (line == "DeviceOn"){
                 Serial.println ("Enciendo todo");
-                client.println("NodeUr2,allOn");
+                client.println("urSend,server,allOn");
                 digitalWrite(out1, alto);
                 digitalWrite(out2, alto);
                 digitalWrite(out3, alto);
@@ -124,7 +126,7 @@ void loop() {
             
            if (line == "DeviceOff"){
                 Serial.println ("Apago todo");
-                client.println("NodeUr2,allOff");
+                client.println("urSend,server,allOff");
                 digitalWrite(out1, bajo);
                 digitalWrite(out2, bajo);
                 digitalWrite(out3, bajo);
@@ -132,42 +134,42 @@ void loop() {
               }
            if (line == "Device1On"){
                 Serial.println ("Enciendo 1");
-                client.println("NodeUr2,d1On");
+                client.println("urSend,server,d1On");
                 digitalWrite(out1, alto);
               }
            if (line == "Device2On"){
                 Serial.println ("Enciendo 2");
-                client.println("NodeUr2,d2On");
+                client.println("urSend,server,d2On");
                 digitalWrite(out2, alto);
               }
            if (line == "Device3On"){
                 Serial.println ("Enciendo 3");
-                client.println("NodeUr2,d3On");
+                client.println("urSend,server,d3On");
                 digitalWrite(out3, alto);
               }
            if (line == "Device4On"){
                 Serial.println ("Enciendo 4");
-                client.println("NodeUr2,d4On");
+                client.println("urSend,server,d4On");
                 digitalWrite(out4, alto);
               }
            if (line == "Device1Off"){
                 Serial.println ("Apago 1");
-                client.println("NodeUr2,d1Off");
+                client.println("urSend,server,d1Off");
                 digitalWrite(out1, bajo);
               }
            if (line == "Device2Off"){
                 Serial.println ("Apago 2");
-                client.println("NodeUr2,d2Off");
+                client.println("urSend,server,d2Off");
                 digitalWrite(out2, bajo);
               }
            if (line == "Device3Off"){
                 Serial.println ("Apago 3");
-                client.println("NodeUr2,d3Off");
+                client.println("urSend,server,d3Off");
                 digitalWrite(out3, bajo);
               }
             if (line == "Device4Off"){
                 Serial.println ("Apago 4");
-                client.println("NodeUr2,d4Off");
+                client.println("urSend,server,d4Off");
                 digitalWrite(out4, bajo);
               }
             if (line == "nodeStatus"){
@@ -180,11 +182,24 @@ void loop() {
                 outStatus += "/";
                 outStatus += String(!digitalRead(out4));
                 Serial.println("NodeUr2," + outStatus);
-                client.println("NodeUr2," + outStatus);
+                client.println("urSend,server," + outStatus);
               }
              
-          
+
+          if (online == 100){
+            Serial.println("dentro de online");
+            client.println("alive,UrDevice");
+            
+            String line = client.readStringUntil('\r');
+              if (line != "ack"){
+              Serial.println("closing connection");
+              client.stop();
+              }
+            online = 0;
+            }
+            
         delay(100);
+        online++;
    }
    
   Serial.println("closing connection");
