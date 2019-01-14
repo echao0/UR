@@ -9,18 +9,18 @@
 
 
 #ifndef STASSID
-#define STASSID "Me-House"
-#define STAPSK  "Et-micasa"
+#define STASSID "Me"
+#define STAPSK  "password"
 #endif
 
-int user_passw =8613;
-String deviceName = "UrNode2";
+int user_passw =8;
+String deviceName = "node";
  
 const char* ssid     = STASSID;
 const char* password = STAPSK;
 
-const char* host = "echao.asuscomm.com";
-const uint16_t port = 8000;
+const char* host = "ip remota";
+const uint16_t port = 8;
 
 int online = 0;
 
