@@ -15,13 +15,13 @@ libc.prctl(15, 'UrServer', 0, 0, 0)
 # -----------------------------------------------------------------------
 working = True #variable para matar al temporizador
 
-NodePassword = 8613
+NodePassword = 9
 sleep_time = 0.7  # Time to wait in infinite loop (CPU control)
 tempoTime = 5
 serveName = "Macbook"
 
 host = "192.168.3.181"
-port = 8000
+port = 1000
 sel = selectors.DefaultSelector()
 
 def packetSender(name,data):
